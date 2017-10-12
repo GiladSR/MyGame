@@ -22,7 +22,7 @@ public class Game extends Canvas implements Runnable{
     private KeyBoard keyBoard;
 
     private boolean running = false;
-    
+
     private Screen screen;
 
     private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
