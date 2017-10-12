@@ -1,6 +1,7 @@
 package com.arena;
 
 import com.arena.graphics.Screen;
+import com.arena.input.KeyBoard;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,14 +13,16 @@ public class Game extends Canvas implements Runnable{
 
     private static final long serialVersionUID =1L;
 
-    public static int width = 3000;
+    public static int width = 300;
     public static int height = width / 16 * 9;
     public static int scale = 3;
 
     private Thread thread;
     private JFrame frame;
-    private boolean running = false;
+    private KeyBoard keyBoard;
 
+    private boolean running = false;
+    
     private Screen screen;
 
     private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -31,6 +34,10 @@ public class Game extends Canvas implements Runnable{
 
         screen = new Screen(width, height);
         frame = new JFrame();
+
+        //setting the keyboard
+        keyBoard = new KeyBoard();
+        addKeyListener(keyBoard);
     }
 
     public synchronized void start(){
@@ -38,8 +45,6 @@ public class Game extends Canvas implements Runnable{
         thread = new Thread(this, "Display");
         thread.start();
     }
-
-    
 
     public synchronized void stop(){
         running = false;
@@ -51,17 +56,53 @@ public class Game extends Canvas implements Runnable{
     }
 
     public void run(){
+        long lastTime = System.nanoTime();
+        long timer = System.currentTimeMillis();
+
+        final double ns = 1000000000.0 / 60.0;
+        double delta = 0;
+
+        // how many frames
+        int frames = 0;
+        int updates = 0;
+        requestFocus();
+
         while (running) {
-            update();
+            long now = System.nanoTime();
+            delta += (now - lastTime) / ns;
+            lastTime = now;
+            while (delta >= 1){
+                update();
+                updates ++;
+                delta --;
+            }
             render();
+            frames ++;
+
+            if (System.currentTimeMillis() - timer > 1000){
+                timer += 1000;
+                System.out.println(updates + " ups, " + frames + " fps");
+                frames = 0;
+                updates = 0;
+            }
         }
+        stop();
     }
 
 
+
+    int x = 0 ,y = 0;
     // game logic
     public void update(){
+        keyBoard.updat();
+        if ( keyBoard.up) y--;
+        if ( keyBoard.down) y++;
+        if ( keyBoard.left) x--;
+        if ( keyBoard.right) x++;
 
     }
+
+
 
     // graphics
     public void render(){
@@ -72,9 +113,9 @@ public class Game extends Canvas implements Runnable{
         }
 
         screen.clear();
-        screen.render();
+        screen.render(x, y);
 
-        for ( int i =0 ; i< pixels.length ; i++){
+        for ( int i =0 ; i < pixels.length ; i++){
             pixels[i] = screen.pixels[i];
         }
 
